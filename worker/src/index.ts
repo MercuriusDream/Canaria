@@ -169,7 +169,7 @@ export class CanariaSqlDurableObject {
       })
 
       // Routes
-      .get("/api_docs.html", () => API_DOCS_HTML)
+      .get("/api_docs.html", ({ html }) => html(API_DOCS_HTML))
 
       .group("/v1", (app) => app
         .get("/ws", ({ request, set }: { request: Request; set: any }) => this.handleClientWebSocket(request, set))
