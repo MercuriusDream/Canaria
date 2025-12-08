@@ -17,6 +17,7 @@ This system consists of two main components:
 - Automatic feed monitoring with exponential backoff
 - Heartbeat monitoring for parser health checks
 - Globally distributed via Cloudflare's edge network
+- ElysiaJS cuz Elysia-chan cute
 
 ## Prerequisites
 
