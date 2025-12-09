@@ -24,6 +24,9 @@ const state: LoopState = {
   cache: new RecentEventCache(5),
 };
 
+const EVENT_BUFFER_SIZE = 20;
+const eventBuffer: NormalizedEvent[] = [];
+
 const stats: ParserStats = {
   totalParses: 0,
   successfulParses: 0,
@@ -60,6 +63,12 @@ async function pollOnce(): Promise<void> {
       state.lastEventId = event.eventId;
       stats.eventsIngested++;
       console.log("[parser] New KMA event", event.eventId);
+
+      // Update buffer
+      eventBuffer.push(event);
+      if (eventBuffer.length > EVENT_BUFFER_SIZE) {
+        eventBuffer.shift();
+      }
     }
   } catch (err) {
     error = err instanceof Error ? err.message : String(err);
@@ -91,13 +100,28 @@ async function pollOnce(): Promise<void> {
     events: parsedEvent ? [parsedEvent] : [],
   };
 
-  const ok = await postJsonWithRetry(config.workerEndpoint + "/v1/events", payload, {
+  const response = await postJsonWithRetry(config.workerEndpoint + "/v1/events", payload, {
     timeoutMs: config.postTimeoutMs,
     retries: config.postRetries,
   });
 
-  if (!ok) {
+  if (!response) {
     console.error("[parser] Failed to deliver payload after retries");
+  } else if (response.sync) {
+    console.log("[parser] Received sync request from worker, sending buffer (" + eventBuffer.length + " events)");
+    try {
+      const syncPayload: ParserPayload = {
+        heartbeat,
+        events: [...eventBuffer] // Send all buffered events
+      };
+      await postJsonWithRetry(config.workerEndpoint + "/v1/events", syncPayload, {
+        timeoutMs: config.postTimeoutMs,
+        retries: 3
+      });
+      console.log("[parser] Sync completed");
+    } catch (err) {
+      console.error("[parser] Failed to sync events:", err);
+    }
   }
 }
 

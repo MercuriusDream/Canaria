@@ -76,6 +76,7 @@ export class CanariaSqlDurableObject {
   private parserErrorHistory: Array<{ timestamp: string; error: string }> = [];
   private readonly MAX_PARSER_ERRORS = 10;
   private startTime: number = Date.now();
+  private needsKmaSync: boolean = true;
 
   // The Inner Elysia App
   private app: any;
@@ -194,6 +195,13 @@ export class CanariaSqlDurableObject {
             // @ts-ignore - Schema validation ensures structural compatibility
             await this.handleIncomingEvents(payload.events);
           }
+
+          if (this.needsKmaSync && payload.heartbeat?.kmaConnection) {
+            this.needsKmaSync = false;
+            set.status = 200;
+            return { sync: true };
+          }
+
           set.status = 204;
           return null;
         }, {

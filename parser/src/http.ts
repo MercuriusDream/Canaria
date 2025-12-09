@@ -21,7 +21,7 @@ export async function postJsonWithRetry(
   url: string,
   payload: ParserPayload,
   { timeoutMs, retries }: PostOptions,
-): Promise<boolean> {
+): Promise<any | null> {
   const body = JSON.stringify(payload);
 
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -38,7 +38,16 @@ export async function postJsonWithRetry(
         signal: controller.signal,
       });
 
-      if (result.ok) return true;
+      if (result.ok) {
+        // Try to parse JSON response if available, otherwise return empty object indicating success
+        // The worker might return 204 No Content
+        if (result.status === 204) return {};
+        try {
+          return await result.json();
+        } catch {
+          return {};
+        }
+      }
     } catch (error) {
       if (attempt === retries) {
         break;
@@ -54,5 +63,5 @@ export async function postJsonWithRetry(
     await new Promise((resolve) => setTimeout(resolve, backoff));
   }
 
-  return false;
+  return null;
 }

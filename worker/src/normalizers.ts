@@ -57,7 +57,7 @@ export function normalizeP2pEvent(raw: any): EventRecord | null {
 
     return {
       eventId: raw.id || raw._id || buildSyntheticId("p2p", time, "9611"),
-      source: "JMA",
+      source: "P2PQUAKE",
       type: "UserReport",
       reportType: 9611,
       time,
@@ -71,6 +71,33 @@ export function normalizeP2pEvent(raw: any): EventRecord | null {
       intensity: null,
       region: `User Reports: ${raw.count || 0}`,
       advisory: raw.confidence ? `Confidence: ${raw.confidence}` : null,
+      revision: "final",
+    };
+  }
+
+  // Handle Code 555 (EEW Detection / User Reports)
+  if (raw.code === 555) {
+    const time = normalizeTime(raw.time);
+    const areas = Array.isArray(raw.areas) ? raw.areas : [];
+    const areaCount = areas.length;
+    const totalPeers = areas.reduce((acc: number, curr: any) => acc + (Number(curr.peer) || 0), 0);
+
+    return {
+      eventId: raw.id || raw._id || buildSyntheticId("p2p", time, "555"),
+      source: "P2PQUAKE",
+      type: "EEWDetection",
+      reportType: 555,
+      time,
+      issueTime: time, // 555 usually lacks a separate issue time, use origin/detect time
+      receiveTime: new Date().toISOString(),
+      receiveSource: "P2P",
+      latitude: null,
+      longitude: null,
+      magnitude: null,
+      depth: null,
+      intensity: null, // Could potentially infer from max peer count but that's unreliable
+      region: `Detected in ${areaCount} area${areaCount === 1 ? '' : 's'} (Total peers: ${totalPeers})`,
+      advisory: null,
       revision: "final",
     };
   }
@@ -97,7 +124,7 @@ export function normalizeP2pEvent(raw: any): EventRecord | null {
 
   return {
     eventId,
-    source: "JMA",
+    source: "P2PQUAKE",
     type: raw.code === 551 ? "information" : String(raw.code),
     reportType: raw.code,
     time,

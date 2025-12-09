@@ -34,6 +34,27 @@ export class FeedManager {
   startAll(): void {
     this.wolfxConnector.start();
     this.p2pConnector.start();
+    this.fetchP2pHistory();
+  }
+
+  private async fetchP2pHistory() {
+    try {
+      const response = await fetch("https://api.p2pquake.net/v2/history?limit=100");
+      if (!response.ok) return;
+
+      const history = await response.json();
+      if (Array.isArray(history)) {
+        // Reverse to process oldest to newest
+        for (const item of history.reverse()) {
+          const event = normalizeP2pEvent(item);
+          if (event) {
+            await this.options.onEvent(event);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch P2P history:", err);
+    }
   }
 
   getStates(): { wolfx: FeedState; p2p: FeedState } {
@@ -87,7 +108,7 @@ class WebSocketConnector {
     private readonly url: string,
     private readonly onMessage: (data: any) => void,
     private readonly onStateChange: (state: FeedState) => void,
-  ) {}
+  ) { }
 
   start(): void {
     if (this.state.status === "connected") return;
@@ -182,7 +203,7 @@ class WebSocketConnector {
     if (this.socket) {
       try {
         this.socket.close();
-      } catch {}
+      } catch { }
     }
     this.socket = null;
     if (this.inactivityTimer) {
@@ -208,7 +229,7 @@ class WebSocketConnector {
     this.pingTimer = setInterval(() => {
       try {
         this.send({ type: "ping", ts: Date.now() });
-      } catch {}
+      } catch { }
     }, PING_INTERVAL_MS);
   }
 

@@ -1,4 +1,4 @@
-export type EventSource = "KMA" | "JMA";
+export type EventSource = "KMA" | "JMA" | "P2PQUAKE";
 
 export interface EventRecord {
   eventId: string;
