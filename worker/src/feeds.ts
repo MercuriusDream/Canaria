@@ -39,7 +39,7 @@ export class FeedManager {
 
   private async fetchP2pHistory() {
     try {
-      const response = await fetch("https://api.p2pquake.net/v2/history?limit=100");
+      const response = await fetch("https://api.p2pquake.net/v2/history?codes=551&codes=552&codes=556&codes=561&limit=100");
       if (!response.ok) return;
 
       const history = await response.json();
@@ -79,6 +79,15 @@ export class FeedManager {
 
   private handleP2pMessage(data: any): void {
     if (!data) return;
+
+    // Filter: Only allow specific codes
+    // 551: Earthquake Information
+    // 552: Tsunami Forecast
+    // 556: EEW (Warning)
+    // 561: User Earthquake Perception
+    const ALLOWED_CODES = [551, 552, 556, 561];
+    if (!ALLOWED_CODES.includes(data.code)) return;
+
     const event = normalizeP2pEvent(data);
     if (event) {
       this.options.onEvent(event);
