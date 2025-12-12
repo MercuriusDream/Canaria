@@ -1,0 +1,29 @@
+name = "canaria-worker"
+main = "src/index.ts"
+compatibility_date = "2024-12-04"
+compatibility_flags = [ "nodejs_compat" ]
+
+[[durable_objects.bindings]]
+name = "CANARIA_DO"
+class_name = "CanariaSqlDurableObject"
+
+[[durable_objects.bindings]]
+name = "LOBBY_DO"
+class_name = "Lobby"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["CanariaSqlDurableObject"]
+
+[[migrations]]
+tag = "v2"
+new_classes = ["Lobby"]
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true

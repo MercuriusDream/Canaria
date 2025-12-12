@@ -1,0 +1,17 @@
+{
+  "dependencies": {},
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.8"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "check": "biome check .",
+    "fix": "biome check --write .",
+    "format": "biome format --write .",
+    "deploy:api": "bun run --filter @canaria/api deploy",
+    "build:web": "bun run --filter @canaria/web build",
+    "deploy:web": "echo 'Not implemented yet - requires hosting setup'"
+  }
+}
